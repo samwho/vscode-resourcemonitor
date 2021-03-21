@@ -18,12 +18,13 @@ export function deactivate() {
 
 class CPUWebviewProvider implements vscode.WebviewViewProvider {
 	view?: vscode.WebviewView;
-	extensionUri: vscode.Uri;
+	context: vscode.ExtensionContext;
 	output: vscode.OutputChannel;
+	interval?: NodeJS.Timeout;
 
 	constructor(context: vscode.ExtensionContext, output: vscode.OutputChannel) {
 		this.output = output;
-		this.extensionUri = context.extensionUri;
+		this.context = context;
 	}
 
 	resolveWebviewView(view: vscode.WebviewView, context: vscode.WebviewViewResolveContext<unknown>, token: vscode.CancellationToken): void | Thenable<void> {
@@ -31,22 +32,21 @@ class CPUWebviewProvider implements vscode.WebviewViewProvider {
 
 		this.view.webview.options = {
 			enableScripts: true,
-			localResourceRoots: [this.extensionUri],
 		};
 
 		const nonce = getNonce();
-		const scriptUri = view.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "src", "cpu.js"));
+		const scriptUri = view.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "cpu.js"));
 
 		view.webview.html = `
 		<!DOCTYPE html>
 		<html lang="en">
 			<head>
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}';">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${view.webview.cspSource}; img-src ${view.webview.cspSource} https:; script-src 'nonce-${nonce}';">
 			</head>
 			<body>
 				<b>Hello world</b>
 				<div id="cpu"></div>
-				<script src="${scriptUri}" nonce="${nonce}"></script>
+				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 		</html>
 		`;
@@ -55,7 +55,7 @@ class CPUWebviewProvider implements vscode.WebviewViewProvider {
 			this.output.appendLine(`extension received message: ${JSON.stringify(message)}`);
 		});
 
-		setInterval(() => {
+		this.interval = setInterval(() => {
 			systeminformation.currentLoad().then(load => {
 				this.view?.webview.postMessage({
 					type: "load",
@@ -63,11 +63,12 @@ class CPUWebviewProvider implements vscode.WebviewViewProvider {
 				});
 			});
 		}, 1000);
-
 	}
 
 	onDeactivate() {
-
+		if (this.interval) {
+			this.interval = undefined;
+		}
 	}
 }
 
