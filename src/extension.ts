@@ -32,6 +32,7 @@ class CPUWebviewProvider implements vscode.WebviewViewProvider {
 
 		this.view.webview.options = {
 			enableScripts: true,
+			localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, "media")],
 		};
 
 		const nonce = getNonce();
