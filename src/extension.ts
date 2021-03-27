@@ -32,21 +32,22 @@ class CPUWebviewProvider implements vscode.WebviewViewProvider {
 
 		this.view.webview.options = {
 			enableScripts: true,
-			localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, "media")],
+			localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, "src")],
 		};
 
 		const nonce = getNonce();
-		const scriptUri = view.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "cpu.js"));
+		const scriptUri = view.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "src", "cpu.js"));
 
 		view.webview.html = `
 		<!DOCTYPE html>
 		<html lang="en">
 			<head>
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${view.webview.cspSource}; img-src ${view.webview.cspSource} https:; script-src 'nonce-${nonce}';">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src ${view.webview.cspSource} https:; script-src 'nonce-${nonce}';">
+				<script nonce="${nonce}" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
 			</head>
 			<body>
 				<b>Hello world</b>
-				<div id="cpu"></div>
+				<canvas width="400" height="400" id="cpu"></div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 		</html>
