@@ -36,32 +36,30 @@ class CPUWebviewProvider implements vscode.WebviewViewProvider {
 		};
 
 		const nonce = getNonce();
-		const scriptUri = view.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "src", "cpu.js"));
+		const scriptUri = view.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "src", "chart.js"));
 
 		view.webview.html = `
 		<!DOCTYPE html>
 		<html lang="en">
 			<head>
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src ${view.webview.cspSource} https:; script-src 'nonce-${nonce}';">
-				<script nonce="${nonce}" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+				<script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 			</head>
 			<body>
-				<b>Hello world</b>
-				<canvas width="400" height="400" id="cpu"></div>
+				<div id="chart"></div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 		</html>
 		`;
 
-		view.webview.onDidReceiveMessage(message => {
-			this.output.appendLine(`extension received message: ${JSON.stringify(message)}`);
-		});
-
 		this.interval = setInterval(() => {
 			systeminformation.currentLoad().then(load => {
 				this.view?.webview.postMessage({
-					type: "load",
-					payload: load,
+					type: "data",
+					payload: {
+						x: new Date().getTime(),
+						y: load.currentLoad,
+					},
 				});
 			});
 		}, 1000);
