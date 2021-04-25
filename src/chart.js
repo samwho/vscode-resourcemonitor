@@ -1,6 +1,7 @@
 (function () {
+    const vscode = acquireVsCodeApi();
     var chart = new ApexCharts(document.querySelector("#chart"), {
-        series: [{ data: [] }],
+        series: [],
         chart: {
             type: 'line',
             animations: {
@@ -66,11 +67,16 @@
         const message = event.data;
         switch (message.type) {
             case 'data':
-                chart.appendData([{ data: [[message.payload.x, message.payload.y]] }]);
+                chart.appendData(message.payload);
                 break;
             case 'options':
                 chart.updateOptions(message.payload);
                 break;
         }
+    });
+
+    vscode.postMessage({
+        type: "ready",
+        payload: undefined,
     });
 }());
